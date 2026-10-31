@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-neutral-50 text-neutral-900;
+}
+
+@layer utilities {
+  /* Subtle paper-grain texture for warm light sections — avoids a flat, templated fill. */
+  .bg-grain {
+    background-image: radial-gradient(rgba(11, 46, 31, 0.05) 1px, transparent 1px);
+    background-size: 3px 3px;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

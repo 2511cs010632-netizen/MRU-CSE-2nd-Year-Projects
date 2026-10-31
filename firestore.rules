@@ -1,0 +1,49 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Users can read any profile but only write their own.
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create, update: if isOwner(userId);
+      allow delete: if false;
+    }
+
+    // Marketplace listings are publicly readable; only the owning farmer can write.
+    match /listings/{listingId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.resource.data.farmerId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.farmerId == request.auth.uid;
+    }
+
+    // Crop disease scan history is private to the user who created it.
+    match /cropDiseaseResults/{resultId} {
+      allow read, write: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+    }
+
+    // Logistics requests visible to the requesting farmer only (extend for transporters as needed).
+    match /logisticsRequests/{requestId} {
+      allow read, write: if isSignedIn() && resource.data.farmerId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.farmerId == request.auth.uid;
+    }
+
+    // Expert consultations visible to the requesting farmer and assigned expert.
+    match /consultations/{consultationId} {
+      allow read: if isSignedIn() &&
+        (resource.data.farmerId == request.auth.uid || resource.data.expertId == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.farmerId == request.auth.uid;
+      allow update: if isSignedIn() &&
+        (resource.data.farmerId == request.auth.uid || resource.data.expertId == request.auth.uid);
+    }
+  }
+}
